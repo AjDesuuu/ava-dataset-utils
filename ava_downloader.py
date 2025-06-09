@@ -3,12 +3,19 @@ import requests
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
+import yaml
+
+def load_paths(config_path="paths.yaml"):
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
+
+paths = load_paths()
 
 # Settings
 split = "test"
-file_list_path = f"/home/Aaron/datasets/ava_file_names_{split}_v2.1.txt"
-output_dir = f"/home/Aaron/datasets/ava/videos/{split}"
-base_url = f"https://s3.amazonaws.com/ava-dataset/{split}/"
+file_list_path = paths["file_list_test"] if split == "test" else paths["file_list_trainval"]
+output_dir = f'{paths["video_dir"]}'.replace("trainval", split)
+base_url = f'{paths["base_url"]}/{split}/'
 max_threads = 4
 max_retries = 3
 

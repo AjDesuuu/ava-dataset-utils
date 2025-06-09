@@ -6,11 +6,18 @@ from collections import defaultdict, Counter
 from concurrent.futures import ProcessPoolExecutor
 from tqdm import tqdm
 from statistics import median
+import yaml
+
+def load_paths(config_path="paths.yaml"):
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
+
+paths = load_paths()
 
 # --- CONFIGURATION ---
-VIDEO_DIR = "/home/Aaron/datasets/ava/videos/trainval"
-ANNOTATION_CSV = "/home/Aaron/datasets/ava/annotations/ava_train_v2.2.csv"
-OUTPUT_DIR = "/home/Aaron/datasets/ava/sampled_clips"
+VIDEO_DIR = paths["video_dir"]
+ANNOTATION_CSV = paths["annotation_csv"]
+OUTPUT_DIR = paths["output_dir"]
 CLUSTER_WINDOW = 5      # seconds between timestamps to consider them part of the same cluster
 MIN_DURATION = 7        # minimum clip length
 BUFFER = 1.0            # buffer to ensure scenes aren't cut too tight

@@ -1,10 +1,16 @@
 import os
 import csv
 import subprocess
+import yaml
 
-# Paths
-dataset_dir = "/home/Aaron/datasets/ava/sampled_clips"  # Path to the 5-second clips directory
-output_csv = "/home/Aaron/datasets/ava/ava_clips_5s_list.csv"  # Output CSV file
+def load_paths(config_path="paths.yaml"):
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
+
+paths = load_paths()
+# Paths from YAML
+dataset_dir = paths["output_dir"]  # Path to the 5-second clips directory
+output_csv = paths.get("clips_csv", "/home/Aaron/datasets/ava/ava_clips_5s_list.csv")  # Output CSV file
 
 # Supported video file extension for clips (we assume `.mp4` here)
 clip_extension = ".mp4"
