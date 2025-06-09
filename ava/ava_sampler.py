@@ -8,16 +8,18 @@ from tqdm import tqdm
 from statistics import median
 import yaml
 
-def load_paths(config_path="paths.yaml"):
+def load_paths(config_path="../paths.yaml"):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(base_dir, config_path)
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 paths = load_paths()
 
-# --- CONFIGURATION ---
-VIDEO_DIR = paths["video_dir"]
-ANNOTATION_CSV = paths["annotation_csv"]
-OUTPUT_DIR = paths["output_dir"]
+VIDEO_DIR = os.path.join(BASE_DIR, "..", paths["video_dir"])
+ANNOTATION_CSV = os.path.join(BASE_DIR, "..", paths["annotation_csv"])
+OUTPUT_DIR = os.path.join(BASE_DIR, "..", paths["output_dir"])
 CLUSTER_WINDOW = 5      # seconds between timestamps to consider them part of the same cluster
 MIN_DURATION = 7        # minimum clip length
 BUFFER = 1.0            # buffer to ensure scenes aren't cut too tight

@@ -6,15 +6,17 @@ import time
 import yaml
 
 def load_paths(config_path="paths.yaml"):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(base_dir, config_path)
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 paths = load_paths()
-
 # Settings
 split = "test"
-file_list_path = paths["file_list_test"] if split == "test" else paths["file_list_trainval"]
-output_dir = f'{paths["video_dir"]}'.replace("trainval", split)
+file_list_path = os.path.join(BASE_DIR, paths["file_list_test"] if split == "test" else paths["file_list_trainval"])
+output_dir = os.path.join(BASE_DIR, paths["video_dir"].replace("trainval", split))
 base_url = f'{paths["base_url"]}/{split}/'
 max_threads = 4
 max_retries = 3

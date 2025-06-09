@@ -4,13 +4,16 @@ import subprocess
 import yaml
 
 def load_paths(config_path="paths.yaml"):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(base_dir, config_path)
     with open(config_path, "r") as f:
         return yaml.safe_load(f)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 paths = load_paths()
-# Paths from YAML
-dataset_dir = paths["output_dir"]  # Path to the 5-second clips directory
-output_csv = paths.get("clips_csv")  # Output CSV file
+dataset_dir = os.path.join(BASE_DIR, paths["output_dir"])
+output_csv = os.path.join(BASE_DIR, paths["clips_csv"])
+
 
 # Supported video file extension for clips (we assume `.mp4` here)
 clip_extension = ".mp4"
