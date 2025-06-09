@@ -5,3 +5,4 @@ ava/sampled_clips/
 *.mkv
 *.webm
 *.avi
+kinetics/
