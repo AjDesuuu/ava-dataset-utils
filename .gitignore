@@ -6,3 +6,5 @@ ava/sampled_clips/
 *.webm
 *.avi
 kinetics/
+ava/ava_clips_5s_list.csv
+ava/ava_train_videos.csv
