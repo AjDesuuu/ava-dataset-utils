@@ -36,18 +36,17 @@ def is_valid_video_ffprobe(path):
 
 def trim_video(file):
     input_path = os.path.join(VIDEO_DIR, file)
-    output_path = os.path.splitext(os.path.join(TRIMMED_VIDEO_DIR, file))[0] + ".mp4"
+    output_path = os.path.join(TRIMMED_VIDEO_DIR, file)  # Keep original extension
     if os.path.exists(output_path) and is_valid_video_ffprobe(output_path):
         return f"✔ Skipped (already trimmed): {file}"
     cmd = [
         "ffmpeg",
         "-hide_banner", "-loglevel", "error",
-        "-n",  # <-- Do not overwrite existing files, skip them
+        "-n",
         "-ss", str(TRIM_START),
         "-t", str(TRIM_DURATION + 1),
         "-i", input_path,
-        "-r", "30",
-        "-strict", "experimental",
+        "-c", "copy",
         output_path
     ]
     try:
@@ -55,8 +54,8 @@ def trim_video(file):
         if is_valid_video_ffprobe(output_path):
             return f"✅ Trimmed: {file}"
         else:
-            if os.path.exists(output_path):
-                os.remove(output_path)
+            # if os.path.exists(output_path):
+            #     os.remove(output_path)
             return f"⚠️ Corrupted output: {file}"
     except Exception as e:
         if os.path.exists(output_path):
