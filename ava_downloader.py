@@ -14,7 +14,7 @@ def load_paths(config_path="paths.yaml"):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 paths = load_paths()
 # Settings
-split = "test"
+split = "trainval"
 file_list_path = os.path.join(BASE_DIR, paths["file_list_test"] if split == "test" else paths["file_list_trainval"])
 output_dir = os.path.join(BASE_DIR, paths["video_dir"].replace("trainval", split))
 base_url = f'{paths["base_url"]}/{split}/'

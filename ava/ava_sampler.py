@@ -20,13 +20,8 @@ paths = load_paths()
 VIDEO_DIR = os.path.join(BASE_DIR, "..", paths["video_dir"])
 ANNOTATION_CSV = os.path.join(BASE_DIR, "..", paths["annotation_csv"])
 OUTPUT_DIR = os.path.join(BASE_DIR, "..", paths["output_dir"])
-CLUSTER_WINDOW = 5      # seconds between timestamps to consider them part of the same cluster
-MIN_DURATION = 7        # minimum clip length
-BUFFER = 1.0            # buffer to ensure scenes aren't cut too tight
-MAX_DURATION = 15       # max duration (e.g., based on the average duration of SSV2 clips)
-NUM_WORKERS = 8         # parallel processes
+NUM_WORKERS = 8
 
-# --- SETUP ---
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 def find_video_file(video_id):
@@ -57,6 +52,10 @@ def extract_clip(task):
 
     output_filename = f"{video_id}_{int(timestamp)}s_{int(duration)}s.mp4"
     output_path = os.path.join(OUTPUT_DIR, output_filename)
+
+    if os.path.exists(output_path) and is_valid_video_ffprobe(output_path):
+        return f"✔ Skipped (already exists): {output_filename}"
+    
     start_time = max(0, timestamp - duration / 2)
     end_time = start_time + duration
 
@@ -101,64 +100,53 @@ def extract_clip(task):
     except Exception as e:
         return f"❌ Error for {video_id}_{timestamp}: {e}"
 
-def cluster_timestamps_with_duration(timestamps, window=5, min_duration=3, max_duration=10, buffer=1.0):
-    timestamps = sorted(set(timestamps))
-    clusters = []
-    current = []
+def get_video_duration(video_path):
+    """Return the duration of the video in seconds."""
+    try:
+        with av.open(video_path) as container:
+            return float(container.duration / av.time_base)
+    except Exception:
+        return None
 
-    for t in timestamps:
-        if not current:
-            current = [t]
-        elif t - current[-1] < window:
-            current.append(t)
-        else:
-            clusters.append(current)
-            current = [t]
-    if current:
-        clusters.append(current)
+def get_relevant_video_ids(annotation_csv):
+    """Parse the annotation file and return a set of relevant video IDs."""
+    relevant_ids = set()
+    with open(annotation_csv, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            video_id = row[0]
+            relevant_ids.add(video_id)
+    return relevant_ids
 
-    results = []
-    for cluster in clusters:
-        start = min(cluster)
-        end = max(cluster)
-        duration = max(min_duration, end - start + buffer)
-
-        # Ensure the duration doesn't exceed the max allowed duration
-        duration = min(duration, max_duration)
-
-        counter = Counter(cluster)
-        if counter:
-            mode_ts, freq = counter.most_common(1)[0]
-            if freq > 1:
-                center_ts = int(mode_ts)
-            else:
-                center_ts = int(median(cluster))
-
-        results.append((center_ts, duration))
-
-    return results
+def sliding_window_tasks(video_dir, relevant_ids, window_size=15, stride=15):
+    """
+    Generate tasks for sliding window clip extraction.
+    Only for relevant 15-minute AVA video segments.
+    """
+    tasks = []
+    for file in os.listdir(video_dir):
+        if not file.endswith(('.mp4', '.mkv', '.webm')):
+            continue
+        video_id, ext = os.path.splitext(file)
+        if video_id not in relevant_ids:
+            continue
+        video_path = os.path.join(video_dir, file)
+        duration = get_video_duration(video_path)
+        if duration is None:
+            continue
+        start = 0
+        while start + window_size <= duration:
+            center_ts = int(start + window_size // 2)
+            tasks.append((video_id, center_ts, window_size))
+            start += stride
+    return tasks
 
 # --- MAIN ---
-video_timestamps = defaultdict(list)
-with open(ANNOTATION_CSV, newline='') as csvfile:
-    reader = csv.reader(csvfile)
-    for row in reader:
-        video_id, timestamp = row[0], float(row[1])
-        video_timestamps[video_id].append(timestamp)
+relevant_ids = get_relevant_video_ids(ANNOTATION_CSV)
+tasks = sliding_window_tasks(VIDEO_DIR, relevant_ids, window_size=15, stride=15)
 
-tasks = []
-seen = set()
-for video_id, timestamps in video_timestamps.items():
-    clustered = cluster_timestamps_with_duration(timestamps, window=CLUSTER_WINDOW, min_duration=MIN_DURATION, max_duration=MAX_DURATION, buffer=BUFFER)
-    for center_ts, duration in clustered:
-        key = (video_id, center_ts, duration)
-        if key not in seen:
-            seen.add(key)
-            tasks.append(key)
-
-# Run extraction with parallel workers and track progress
 with ProcessPoolExecutor(max_workers=NUM_WORKERS) as executor:
     for result in tqdm(executor.map(extract_clip, tasks), total=len(tasks), desc="Processing clips", unit="clip"):
         print(result)
 
-print("🎉 All dynamic clips processed.")
+print("🎉 All sliding window clips processed.")
