@@ -36,19 +36,26 @@ def is_valid_video_ffprobe(path):
 
 def trim_video(file):
     input_path = os.path.join(VIDEO_DIR, file)
-    output_path = os.path.join(TRIMMED_VIDEO_DIR, file)  # Keep original extension
+    output_filename = os.path.splitext(file)[0] + ".mp4"  # Always .mp4
+    output_path = os.path.join(TRIMMED_VIDEO_DIR, output_filename)
     if os.path.exists(output_path) and is_valid_video_ffprobe(output_path):
         return f"✔ Skipped (already trimmed): {file}"
+    
     cmd = [
         "ffmpeg",
-        "-hide_banner", "-loglevel", "error",
-        "-n",
-        "-ss", str(TRIM_START),
-        "-t", str(TRIM_DURATION + 1),
+        "-y",
+        "-hide_banner", "-loglevel", "error",  # ✅ clean logging
+        "-ss", str(TRIM_START),                          # start at 900s
+        "-t", str(TRIM_DURATION+1),                           # duration = 15m 1s
         "-i", input_path,
-        "-c", "copy",
+        "-r", "30",                            # enforce consistent FPS
+        "-c:v", "h264_nvenc",                  # ✅ GPU encoding
+        "-preset", "fast",                     # fast NVENC preset
+        "-b:v", "2M",                          # bitrate target
+        "-an",                                 # remove audio
         output_path
     ]
+
     try:
         subprocess.run(cmd, check=True)
         if is_valid_video_ffprobe(output_path):

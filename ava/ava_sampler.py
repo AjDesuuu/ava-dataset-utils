@@ -17,7 +17,7 @@ def load_paths(config_path="../paths.yaml"):
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 paths = load_paths()
 
-VIDEO_DIR = os.path.join(BASE_DIR, "..", paths["video_dir"])
+VIDEO_DIR = os.path.join(BASE_DIR, "..", paths["trimmed_video_dir"])
 ANNOTATION_CSV = os.path.join(BASE_DIR, "..", paths["annotation_csv"])
 OUTPUT_DIR = os.path.join(BASE_DIR, "..", paths["output_dir"])
 NUM_WORKERS = 8
