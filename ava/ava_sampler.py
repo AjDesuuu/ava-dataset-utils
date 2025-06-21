@@ -1,4 +1,4 @@
-import csv
+import csv # csv is used to read the annotation CSV file
 import os
 import av
 import subprocess
