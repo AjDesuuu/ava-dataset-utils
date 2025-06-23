@@ -2,6 +2,8 @@ import os
 import csv
 import subprocess
 import yaml
+from tqdm import tqdm
+import concurrent.futures 
 
 def load_paths(config_path="paths.yaml"):
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -34,27 +36,35 @@ def is_valid_video_ffprobe(clip_path):
 
 def scan_and_generate_csv(dataset_dir, output_csv):
     """Scan the dataset directory and generate a CSV with clip paths and dummy class labels."""
-    clips = []
-
-    # Walk through the directory to find video clips
+    # Gather all candidate files first
+    candidate_clips = []
     for root, _, files in os.walk(dataset_dir):
         for file in files:
             if file.endswith(clip_extension):
-                clip_path = os.path.join(root, file)
-                
-                # Check if the video clip is valid (non-corrupt)
-                if is_valid_video_ffprobe(clip_path):
-                    clips.append([clip_path, 0])  # Append valid clip with class label 0
+                candidate_clips.append(os.path.join(root, file))
+
+    # Parallel validation
+    valid_clips = []
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        results = list(tqdm(
+            executor.map(is_valid_video_ffprobe, candidate_clips),
+            total=len(candidate_clips),
+            desc="Validating clips",
+            unit="clip"
+        ))
+    for clip_path, is_valid in zip(candidate_clips, results):
+        if is_valid:
+            valid_clips.append([clip_path, 0])
 
     # Write the clip paths and class labels (0) to a CSV file with space delimiter
     with open(output_csv, mode="w", newline="") as csv_file:
         writer = csv.writer(csv_file, delimiter=" ")
         writer.writerow(["clip_path", "class_label"])  # CSV header
-        for clip in clips:
+        for clip in valid_clips:
             writer.writerow(clip)
 
     print(f"CSV file generated: {output_csv}")
-    print(f"Total valid clips found: {len(clips)}")
+    print(f"Total valid clips found: {len(valid_clips)}")
 
 if __name__ == "__main__":
     scan_and_generate_csv(dataset_dir, output_csv)

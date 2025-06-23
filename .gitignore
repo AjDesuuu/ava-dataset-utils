@@ -7,5 +7,6 @@ ava/sampled_clips/
 *.avi
 kinetics/
 ava/ava_clips_5s_list.csv
+ava/ava_clips_list.csv
 ava/ava_train_videos.csv
 ava/videos_trimmed/
