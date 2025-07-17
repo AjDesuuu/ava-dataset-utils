@@ -2,9 +2,22 @@ import os
 import pickle
 import shutil
 from tqdm import tqdm
+import yaml
 
-SEMANTIC_MASK_DIR = "ava/semantic_masks"
-FLAGGED_DIR = "ava/flagged_masks"
+def load_paths(config_path="paths.yaml"):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    config_path = os.path.join(base_dir, config_path)
+    with open(config_path, "r") as f:
+        return yaml.safe_load(f)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+paths = load_paths()
+
+SEMANTIC_MASK_DIR = os.path.join(BASE_DIR, paths["semantic_masks_dir"])
+FLAGGED_DIR = os.path.join(BASE_DIR, paths["flagged_masks_dir"])
+# use savample overlays folder to create the video sample with the pkl overlay. 
+SAMPLE_OVERLAYS_DIR = os.path.join(BASE_DIR, paths["sample_overlays_dir"]) 
+
 REQUIRED_KEYS = {"clip_id", "frames"}
 
 def validate_detection(det):
