@@ -12,6 +12,7 @@ ava/ava_train_videos.csv
 ava/videos_trimmed/
 ava/semantic_masks/
 ava/flagged_masks/
+Validation Report/
 invalid_frame_count_videos.txt
 error_videos.txt
 ava/sample_overlays/
