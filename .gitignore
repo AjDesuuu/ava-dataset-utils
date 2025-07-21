@@ -16,3 +16,4 @@ Validation Report/
 invalid_frame_count_videos.txt
 error_videos.txt
 ava/sample_overlays/
+ava/ava_resolutions.csv
