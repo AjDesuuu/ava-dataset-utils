@@ -55,29 +55,66 @@ def extract_clip(task):
 
     start_time = max(0, timestamp - duration / 2)
 
-    cmd = [
+    # Try GPU encoding first (NVENC), fallback to CPU if GPU unavailable in worker
+    nvenc_cmd = [
         "ffmpeg", "-hide_banner", "-loglevel", "error",
         "-y",
         "-ss", str(start_time),
         "-t", str(duration),
         "-i", video_path,
-        "-c", "copy",    # ✅ no re-encoding
-        "-an",           # ✅ remove audio (optional, if not already stripped)
+        "-preset", "fast",               # Fast encoding preset
+        "-crf", "23",                    # Good quality/size balance
+        "-r", "30",                      # Force consistent 30 FPS
+        "-c:v", "h264_nvenc",            # 🚀 GPU encoding (much faster)
+        "-avoid_negative_ts", "make_zero", # Fix timestamp issues
+        "-fflags", "+genpts",            # Generate proper timestamps
+        "-an",                           # Remove audio
+        output_path
+    ]
+    
+    cpu_fallback_cmd = [
+        "ffmpeg", "-hide_banner", "-loglevel", "error",
+        "-y",
+        "-ss", str(start_time),
+        "-t", str(duration),
+        "-i", video_path,
+        "-preset", "fast",               # Fast encoding preset
+        "-crf", "23",                    # Good quality/size balance
+        "-r", "30",                      # Force consistent 30 FPS
+        "-c:v", "libx264",               # 🖥️ CPU encoding fallback
+        "-avoid_negative_ts", "make_zero", # Fix timestamp issues
+        "-fflags", "+genpts",            # Generate proper timestamps
+        "-an",                           # Remove audio
         output_path
     ]
 
+    # Try NVENC first
     try:
-        subprocess.run(cmd, check=True)
+        subprocess.run(nvenc_cmd, check=True, stderr=subprocess.PIPE)
         if is_valid_video_ffprobe(output_path):
-            return f"✅ Trimmed: {output_filename}"
+            return f"✅ Trimmed (GPU): {output_filename}"
         else:
             if os.path.exists(output_path):
                 os.remove(output_path)
             return f"⚠️ Corrupted output: {output_filename}"
-    except Exception as e:
+    except Exception as nvenc_error:
+        # Clean up partial file
         if os.path.exists(output_path):
             os.remove(output_path)
-        return f"❌ Error trimming {video_id}_{timestamp}: {e}"
+        
+        # Try CPU fallback
+        try:
+            subprocess.run(cpu_fallback_cmd, check=True)
+            if is_valid_video_ffprobe(output_path):
+                return f"✅ Trimmed (CPU): {output_filename}"
+            else:
+                if os.path.exists(output_path):
+                    os.remove(output_path)
+                return f"⚠️ Corrupted output: {output_filename}"
+        except Exception as cpu_error:
+            if os.path.exists(output_path):
+                os.remove(output_path)
+            return f"❌ Error trimming {video_id}_{timestamp}: GPU failed ({nvenc_error}), CPU failed ({cpu_error})"
 
 def get_video_duration(video_path):
     """Return the duration of the video in seconds."""
