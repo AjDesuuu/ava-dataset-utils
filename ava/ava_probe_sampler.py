@@ -94,10 +94,8 @@ def trim_clip(args):
         "-ss", str(TRIM_START),                # Start at 902s
         "-t", str(TRIM_DURATION),              # Duration = 896s (902-1798)
         "-i", input_path,                      # Input file
-        "-r", "30",                            # Enforce consistent FPS
         "-c:v", "h264_nvenc",                  # GPU encoding (fallback to libx264 if not available)
         "-preset", "fast",                     # Fast encoding preset
-        "-b:v", "2M",                          # Bitrate target
         "-an",                                 # Remove audio
         output_path
     ]
