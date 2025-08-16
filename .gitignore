@@ -1,6 +1,7 @@
 # Ignore all video files and sampled clips
 ava/videos/
 ava/sampled_clips/
+ava/probe_clips/
 *.mp4
 *.mkv
 *.webm
