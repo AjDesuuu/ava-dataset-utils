@@ -2,6 +2,8 @@
 ava/videos/
 ava/sampled_clips/
 ava/probe_clips/
+ava/videos_15min
+ava/frames
 *.mp4
 *.mkv
 *.webm
@@ -18,3 +20,5 @@ invalid_frame_count_videos.txt
 error_videos.txt
 ava/sample_overlays/
 ava/ava_resolutions.csv
+ava/frame_lists/
+ava/videos_15min/
