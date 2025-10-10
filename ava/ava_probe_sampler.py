@@ -28,8 +28,8 @@ os.makedirs(TRAIN_OUTPUT_DIR, exist_ok=True)
 os.makedirs(VAL_OUTPUT_DIR, exist_ok=True)
 
 NUM_WORKERS = 8
-TRIM_START = 900   # seconds (15 minutes - matching cut_ava_videos.sh)
-TRIM_END = 1801    # seconds (30 minutes and 1 second - matching cut_ava_videos.sh)
+TRIM_START = 902   # seconds (15 minutes - matching cut_ava_videos.sh)
+TRIM_END = 1798    # seconds (30 minutes and 1 second - matching cut_ava_videos.sh)
 TRIM_DURATION = TRIM_END - TRIM_START  # 901 seconds
 
 def is_valid_video_ffprobe(path):
